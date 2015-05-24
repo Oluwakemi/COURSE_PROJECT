@@ -25,80 +25,46 @@ library(data.table)
 # STEP 1: Merge the training and the test sets to create one data set.
 
 ## load the test and train datasets into R
- 
-x_train<- read.table("UCI HAR Dataset/train/X_train.txt", header = FALSE)
-y_train <- read.table("UCI HAR Dataset/train/y_train.txt", header = FALSE)
-subject_train <- read.table("UCI HAR Dataset/train/subject_train.txt", header = FALSE)
+#The set of variables that were created from these sets are: 
+x_train : contains the x_train set
+y_train : contains the y_train set
+subject_train : contains the subject_train set
 
-x_test<- read.table("UCI HAR Dataset/test/X_test.txt", header = FALSE)
-y_test <- read.table("UCI HAR Dataset/test/y_test.txt", header = FALSE)
-subject_test <- read.table("UCI HAR Dataset/test/subject_test.txt", header = FALSE)
+x_test : contains the x_test set
+y_test : contains the y_test set
+subject_test : contains the subject_test set
 
 
 # Both training and test data sets are split up into subject, activity and features.
 ## Merge the respective datasets in training and test sets to create one data set corresponding to training, activity and features.
 
-Features <- rbind(x_train,x_test) #values for the variable 'features' come from the datasets x_train and x_test.
-Activity <- rbind(y_train,y_test)  #values for the variable 'activity' come from the datasets y_train and y_test.
-Subject <- rbind(subject_train,subject_test)  #values for the variable 'subject' come the datasets subject_train and subject_test.
+Features : contains the x_test and x_train sets 
+Activity : contains the y_test and y_train sets 
+Subject  : contains the subject_test and subject_train sets 
 
 
 
 # STEP 2: Extract only the measurements on the mean and standard deviation for each measurement.
 ## Names for the elements variable 'features' come from the file 'feature.txt'
+## subset out only columns with measurements mean() and std() featuredata end name columns accordingly, using rbind().
 
-featureNames <- read.table("UCI HAR Dataset/features.txt") #load the features.txt file into R. 
+featureNames: contains data from the features.txt.d.table("UCI HAR Dataset/features.txt") #load the features.txt file into R.
+ 
+- Col_MeanStd: contains only the columns with mean() and std() measurements.
+- The variable 'Features' is renamed using the appropriate names gotten from the features.txt file, stored in the variable 'featureNames'
+- The variable 'Activity' is renamed using the appropriate names gotten from the activity.txt file, stored in the variable 'activityNames'
+- The variable 'wholedata' stores the merge of all three datasets 'Subject', 'Activity' and 'Features'.
 
-## subset out only columns with measurements mean() and std() featuredata end name columns accordingly.
+#The following column names in the variable 'wholedata' were modified:
+-'t' with Time
+-'Acc' with Accelerometer
+-'Gyro' with Gyroscope
+-'Mag' with Magnitude
+-'BodyBody' with Body
+-'-mean()' with Mean
+-'-std()' with STD
+-'f' with Frequency.
 
-Col_MeanStd <- grep("mean\\(\\)|std\\(\\)", featureNames[, 2])
-Features <- Features[, Col_MeanStd]
-names(Features) <- featureNames[Col_MeanStd, 2]
-str(Features)
+#The average of each variable for each activity and each subject was computed using dplyr and stored in the variable 'tidydata'.
+- The final output data was stored in a text file called "Tidydata.txt" using write.table() using row.name=FALSE.
 
-
-# STEP 3: Use descriptive activity names to name the activities in the data set.
-## activities IN the activity dataset have been coded with numbers but their actual labels are found in the 'activity.txt' file
-## load the file and and replace the code numbers with actual activity labels.
-
-activityNames <- read.table("UCI HAR Dataset/activity_labels.txt") #Names for the variable 'activity' come from the file 'activity_labels.txt'
-Activity<- activityNames[Activity[,1],2]
-str(Activity)
-
-names(Subject) <-"Subject"  ###Assign correct column name for 'Subject'
-
-## Combine all three data sets
-wholedata <- cbind(Subject,Activity,Features)
-str(wholedata)
-
-
-# STEP 4:Appropriately label the data set with descriptive variable names.
-## examine the variable names in wholedata to see where to effect changes.
-
-names(wholedata)
-
-## assign decsriptive variable names to the data by replacing:
-## 't' with Time; 'Acc' with Accelerometer; 'Gyro' with Gyroscope; 'Mag' with Magnitude;
-## 'BodyBody' with Body; '-mean()' with Mean; '-std()' with STD; 'f' with Frequency.
-
-names(wholedata)<-gsub("^t", "Time", names(wholedata))
-names(wholedata)<-gsub("^f", "Frequency", names(wholedata))
-names(wholedata)<-gsub("Acc", "Accelerometer", names(wholedata))
-names(wholedata)<-gsub("Gyro", "Gyroscope", names(wholedata))
-names(wholedata)<-gsub("Mag", "Magnitude", names(wholedata))
-names(wholedata)<-gsub("BodyBody", "Body", names(wholedata))
-names(wholedata)<-gsub("-mean()", "Mean", names(wholedata), ignore.case = TRUE)
-names(wholedata)<-gsub("-std()", "STD", names(wholedata), ignore.case = TRUE)
-
-#examine the updated data
-names(wholedata)
-
-
-#STEP 5:From the data set in step 4, create a second, independent tidy data set with 
-#the average of each variable for each activity and each subject.
-
-library(dplyr)
-tidy <- group_by(wholedata,Subject, Activity)
-tidydata<- summarise_each(tidy, funs(mean))
-View(tidydata)
-write.table(Data2, file = "Tidydata.txt",row.name=FALSE)
